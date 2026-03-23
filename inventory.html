@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>حالة المخزون | إدارة المخازن</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0f12;
+      --surface:   #15181e;
+      --surface2:  #1c2028;
+      --border:    #252930;
+      --border2:   #2e3340;
+      --accent:    #f5a623;
+      --accent-dk: #c4831a;
+      --text:      #e8eaf0;
+      --muted:     #b0bad9;
+      --muted2:    #3d4351;
+      --danger:    #e05252;
+      --success:   #4caf82;
+      --warning:   #e0a030;
+      --input-bg:  #1c2028;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── background grid ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: .3;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ════════════════════════════════
+       TOP NAV
+    ════════════════════════════════ */
+    .topnav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,15,18,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1rem;
+    }
+
+    .topnav-inner {
+      max-width: 900px;
+      margin: 0 auto;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* تنسيقات إضافية للـ Navbar */
+.nav-right-side {
+  display: flex;
+  align-items: center;
+  gap: 2rem; /* مسافة بين اللوجو والروابط */
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: color 0.2s;
+  padding: 0.5rem 0;
+  position: relative;
+}
+
+.nav-link:hover {
+  color: var(--text);
+}
+
+/* خط صغير تحت الرابط النشط */
+/* .nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+} */
+
+@media (max-width: 600px) {
+  .nav-right-side { gap: 1rem; }
+  .nav-links { gap: 0.8rem; }
+  .nav-link { font-size: 0.75rem; }
+}
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 30px; height: 30px;
+      background: var(--accent);
+      border-radius: 3px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .logo-text {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .65rem;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .nav-actions { display: flex; align-items: center; gap: .5rem; }
+
+    .btn-icon {
+      width: 36px; height: 36px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      transition: color .2s, border-color .2s, background .2s;
+    }
+    .btn-icon:hover {
+      color: var(--text);
+      border-color: var(--border2);
+      background: var(--surface2);
+    }
+
+    /* ════════════════════════════════
+       MAIN WRAPPER
+    ════════════════════════════════ */
+    .main {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 1.5rem 1rem 4rem;
+    }
+
+    /* ── page header ── */
+    .page-header {
+      margin-bottom: 1.5rem;
+      animation: fadeUp .4s ease both;
+    }
+
+    .page-header h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+    }
+
+    .page-header p {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-top: .25rem;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ════════════════════════════════
+       STAT CARDS
+    ════════════════════════════════ */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .75rem;
+      margin-bottom: 1.5rem;
+      animation: fadeUp .4s .08s ease both;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .9rem 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+    }
+
+    .stat-card.total::after  { background: var(--accent); }
+    .stat-card.low::after    { background: var(--warning); }
+    .stat-card.out::after    { background: var(--danger); }
+
+    .stat-label {
+      font-size: .72rem;
+      color: var(--muted);
+      font-weight: 600;
+      letter-spacing: .04em;
+      margin-bottom: .4rem;
+    }
+
+    .stat-value {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 1.6rem;
+      font-weight: 500;
+      line-height: 1;
+    }
+
+    .stat-card.total .stat-value { color: var(--accent); }
+    .stat-card.low   .stat-value { color: var(--warning); }
+    .stat-card.out   .stat-value { color: var(--danger); }
+
+    /* ════════════════════════════════
+       SEARCH BAR
+    ════════════════════════════════ */
+    .search-wrap {
+      position: relative;
+      margin-bottom: .75rem;
+      animation: fadeUp .4s .12s ease both;
+    }
+
+    .search-icon {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+      line-height: 0;
+    }
+
+    .clear-btn {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      line-height: 0;
+      padding: 0;
+      display: none;
+      transition: color .2s;
+    }
+    .clear-btn:hover { color: var(--text); }
+    .clear-btn.visible { display: block; }
+
+    #searchInput {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      font-size: .95rem;
+      padding: .85rem 3rem .85rem 3rem;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+    }
+
+    #searchInput:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(245,166,35,.1);
+    }
+
+    #searchInput::placeholder { color: var(--muted); opacity: .7; }
+
+    /* ── filter chips ── */
+    .filter-row {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+      animation: fadeUp .4s .16s ease both;
+    }
+
+    .chip {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--muted);
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      font-size: .78rem;
+      font-weight: 500;
+      padding: .3rem .85rem;
+      cursor: pointer;
+      transition: all .2s;
+      white-space: nowrap;
+    }
+    .chip:hover { border-color: var(--border2); color: var(--text); }
+    .chip.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0d0f12;
+      font-weight: 700;
+    }
+
+    /* ════════════════════════════════
+       RESULT COUNT / STATUS LINE
+    ════════════════════════════════ */
+    .result-line {
+      font-size: .78rem;
+      color: var(--muted);
+      margin-bottom: .85rem;
+      font-family: 'IBM Plex Mono', monospace;
+      animation: fadeUp .4s .18s ease both;
+    }
+
+    .result-line span { color: var(--accent); }
+
+    /* ════════════════════════════════
+       ERROR / EMPTY STATE
+    ════════════════════════════════ */
+    .state-box {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: .75rem;
+      padding: 3rem 1rem;
+      text-align: center;
+      animation: fadeUp .3s ease both;
+    }
+    .state-box.show { display: flex; }
+
+    .state-icon {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+    }
+
+    .state-box.empty .state-icon  { background: rgba(90,95,110,.12); color: var(--muted); }
+    .state-box.error .state-icon  { background: rgba(224,82,82,.1);  color: var(--danger); }
+
+    .state-title {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .state-box.error .state-title { color: var(--danger); }
+
+    .state-sub {
+      font-size: .82rem;
+      color: var(--muted);
+      max-width: 260px;
+      line-height: 1.6;
+    }
+
+    /* ════════════════════════════════
+       PRODUCT TABLE
+    ════════════════════════════════ */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      animation: fadeUp .4s .2s ease both;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: .65rem .9rem;
+      font-size: .73rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: .05em;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    thead th:last-child { text-align: center; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,.025); }
+
+    td {
+      padding: .8rem .9rem;
+      font-size: .88rem;
+      vertical-align: middle;
+    }
+
+    .product-name {
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .product-sku {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .72rem;
+      color: var(--muted);
+      margin-top: .18rem;
+    }
+
+    .product-category {
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    .qty-cell {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .95rem;
+      font-weight: 500;
+    }
+
+    /* status badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .35rem;
+      font-size: .72rem;
+      font-weight: 600;
+      padding: .25rem .65rem;
+      border-radius: 20px;
+      white-space: nowrap;
+      letter-spacing: .02em;
+    }
+
+    .badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .badge.ok      { background: rgba(76,175,130,.12); color: var(--success); }
+    .badge.ok      .badge-dot { background: var(--success); }
+    .badge.low     { background: rgba(224,160,48,.12);  color: var(--warning); }
+    .badge.low     .badge-dot { background: var(--warning); }
+    .badge.out     { background: rgba(224,82,82,.12);   color: var(--danger); }
+    .badge.out     .badge-dot { background: var(--danger); }
+
+    .badge-col { text-align: center; }
+
+    /* ── mobile: hide some cols ── */
+    @media (max-width: 520px) {
+      .col-cat  { display: none; }
+      .col-sku  { display: none; }
+
+      td, th { padding: .7rem .65rem; }
+
+      .page-header h1 { font-size: 1.15rem; }
+
+      .stats-grid { grid-template-columns: repeat(3,1fr); gap: .5rem; }
+      .stat-value { font-size: 1.3rem; }
+    }
+
+    /* ── skeleton loader ── */
+    .skeleton-row td { padding: .8rem .9rem; }
+
+    .skel {
+      height: 14px;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--surface2) 25%, var(--border2) 50%, var(--surface2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+    }
+    .skel.short { width: 55%; }
+    .skel.long  { width: 80%; }
+    .skel.tiny  { width: 40%; }
+
+    @keyframes shimmer {
+      from { background-position: 200% 0; }
+      to   { background-position: -200% 0; }
+    }
+
+    /* ── loading spinner (full page) ── */
+    .page-loader {
+      position: fixed;
+      inset: 0;
+      background: var(--bg);
+      display: grid;
+      place-items: center;
+      z-index: 200;
+      transition: opacity .3s;
+    }
+    .page-loader.hide { opacity: 0; pointer-events: none; }
+
+    .spin-ring {
+      width: 36px; height: 36px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+  </style>
+</head>
+<body>
+
+<!-- page loader -->
+<div class="page-loader" id="pageLoader">
+  <div class="spin-ring"></div>
+</div>
+
+<!-- ══ NAVBAR ══ -->
+<nav class="topnav">
+    <div class="topnav-inner">
+      <div class="nav-right-side" style="display: flex; align-items: center; gap: 24px;">
+        <a href="inventory.html" style="text-decoration: none; color: inherit; display: flex; align-items: center; gap: 10px;">
+          <div class="logo-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0d0f12" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 4l9 5.5V20H3V9.5z"/><rect x="9" y="14" width="6" height="6" rx=".5"/></svg>
+          </div>
+          <span class="logo-text">WMS · v1.0</span>
+        </a>
+        
+        <div class="nav-links" style="display: flex; gap: 16px;">
+          <a href="inventory.html" class="nav-link">حالة المخزون</a>
+          <a href="add_products.html" class="nav-link">إضافة منتجات</a>
+          <a href="stock_movements.html" class="nav-link">حركات المخزون</a>
+          <a href="view_movements.html" class="nav-link active">سجل الحركات</a>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button class="btn-icon" id="refreshBtn" title="تحديث"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg></button>
+        <button class="btn-icon" id="logoutBtn" title="تسجيل الخروج"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button>
+      </div>
+    </div>
+  </nav>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+
+  <!-- page header -->
+  <div class="page-header">
+    <h1>حالة المخزون</h1>
+    <p id="lastUpdate">جاري التحميل…</p>
+  </div>
+
+  <!-- stat cards -->
+  <div class="stats-grid">
+    <div class="stat-card total">
+      <div class="stat-label">إجمالي الأصناف</div>
+      <div class="stat-value" id="countTotal">—</div>
+    </div>
+    <div class="stat-card low">
+      <div class="stat-label">مخزون منخفض</div>
+      <div class="stat-value" id="countLow">—</div>
+    </div>
+    <div class="stat-card out">
+      <div class="stat-label">نفد المخزون</div>
+      <div class="stat-value" id="countOut">—</div>
+    </div>
+  </div>
+
+  <!-- search -->
+  <div class="search-wrap">
+    <span class="search-icon">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+    </span>
+    <input type="search" id="searchInput" placeholder="ابحث باسم المنتج أو الكود…" autocomplete="off" />
+    <button class="clear-btn" id="clearBtn" aria-label="مسح البحث">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- filter chips -->
+  <div class="filter-row" id="filterRow">
+    <button class="chip active" data-filter="all">الكل</button>
+    <button class="chip" data-filter="ok">متوفر</button>
+    <button class="chip" data-filter="low">منخفض</button>
+    <button class="chip" data-filter="out">نفد</button>
+  </div>
+
+  <!-- result count -->
+  <div class="result-line" id="resultLine"></div>
+
+  <!-- empty / error states -->
+  <div class="state-box empty" id="emptyState">
+    <div class="state-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        <line x1="8" y1="11" x2="14" y2="11"/>
+      </svg>
+    </div>
+    <div class="state-title">لا توجد نتائج</div>
+    <div class="state-sub" id="emptySubtext">لم يتم العثور على منتج يطابق بحثك، جرب كلمة مختلفة</div>
+  </div>
+
+  <div class="state-box error" id="errorState">
+    <div class="state-icon">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    </div>
+    <div class="state-title">حدث خطأ</div>
+    <div class="state-sub" id="errorSubtext">تعذّر تحميل بيانات المخزون، تحقق من الاتصال وحاول مجدداً</div>
+  </div>
+
+  <!-- table -->
+  <div class="table-wrap" id="tableWrap">
+    <table id="inventoryTable">
+      <thead>
+        <tr>
+          <th>المنتج</th>
+          <th class="col-cat">التصنيف</th>
+          <th>الكمية</th>
+          <th class="badge-col">الحالة</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <!-- skeleton rows while loading -->
+        <tr class="skeleton-row"><td><div class="skel long"></div><div class="skel short" style="margin-top:.4rem"></div></td><td class="col-cat"><div class="skel tiny"></div></td><td><div class="skel tiny"></div></td><td class="badge-col"><div class="skel tiny" style="margin:0 auto"></div></td></tr>
+        <tr class="skeleton-row"><td><div class="skel long"></div><div class="skel short" style="margin-top:.4rem"></div></td><td class="col-cat"><div class="skel tiny"></div></td><td><div class="skel tiny"></div></td><td class="badge-col"><div class="skel tiny" style="margin:0 auto"></div></td></tr>
+        <tr class="skeleton-row"><td><div class="skel long"></div><div class="skel short" style="margin-top:.4rem"></div></td><td class="col-cat"><div class="skel tiny"></div></td><td><div class="skel tiny"></div></td><td class="badge-col"><div class="skel tiny" style="margin:0 auto"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</main>
+
+<!-- ══════════════ SUPABASE + LOGIC ══════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  /* ═══════════════════════════════════════
+     1.  SUPABASE CONFIG
+     ═══════════════════════════════════════
+     غيّر القيمتين دول بقيمك من Supabase
+     اسم الجدول الافتراضي: "products"
+     الأعمدة المتوقعة:
+       id          uuid / serial
+       name        text          (اسم المنتج)
+       sku         text          (كود المنتج)
+       category    text          (التصنيف)
+       quantity    int           (الكمية)
+       low_threshold int         (الحد الأدنى للتنبيه — اختياري، default 10)
+  ═══════════════════════════════════════ */
+  const SUPABASE_URL = 'https://fyrqrcmelcgdjcmdlebh.supabase.co'
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5cnFyY21lbGNnZGpjbWRsZWJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNTcxMzMsImV4cCI6MjA4NTczMzEzM30.lrwpOs5yWOel9LfzSnmrnWWWBdbedv6TfeHWu_TJOC4'
+  const TABLE_NAME   = 'products'
+
+  const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+
+  /* ═══════════════════════════════════════
+     2.  AUTH GUARD
+  ═══════════════════════════════════════ */
+  ;(async () => {
+    const { data: { session } } = await _supabase.auth.getSession()
+    if (!session) { 
+      window.location.href = 'index.html'
+      return 
+    }
+    // تحميل البيانات فور التأكد من تسجيل الدخول
+    loadInventory()
+  })()
+
+  /* ═══════════════════════════════════════
+     3.  STATE
+  ═══════════════════════════════════════ */
+  let allProducts   = []
+  let activeFilter  = 'all'
+  let searchQuery   = ''
+
+  /* ═══════════════════════════════════════
+     4.  LOAD DATA
+  ═══════════════════════════════════════ */
+  async function loadInventory() {
+    showLoader(true)
+    hideStates()
+
+    try {
+      const { data, error } = await _supabase
+        .from(TABLE_NAME)
+        .select('*') 
+        .order('name', { ascending: true })
+
+      if (error) throw error
+
+      allProducts = data || []
+      console.log("Data Received:", allProducts) // سطر للتأكد في الـ Console
+
+      updateStats()
+      renderTable()
+      updateTimestamp()
+
+    } catch (error) {
+      showError('تعذّر تحميل البيانات: ' + error.message)
+    } finally {
+      showLoader(false)
+    }
+  }
+
+  /* ═══════════════════════════════════════
+     5.  STATUS HELPER
+  ═══════════════════════════════════════ */
+  function getStatus(p) {
+    const threshold = p.low_threshold ?? 10
+    if (p.quantity <= 0)          return 'out'
+    if (p.quantity <= threshold)  return 'low'
+    return 'ok'
+  }
+
+  const statusLabel = { ok: 'متوفر', low: 'منخفض', out: 'نفد' }
+
+  /* ═══════════════════════════════════════
+     6.  STATS
+  ═══════════════════════════════════════ */
+  function updateStats() {
+    const total = allProducts.length
+    const low   = allProducts.filter(p => getStatus(p) === 'low').length
+    const out   = allProducts.filter(p => getStatus(p) === 'out').length
+
+    // تأكدنا هنا إننا بننادي الـ IDs الصح اللي في الـ HTML بتاعك
+    animateNumber('countTotal', total)
+    animateNumber('countLow',   low)
+    animateNumber('countOut',   out)
+  }
+
+  function animateNumber(id, target) {
+    const el = document.getElementById(id)
+    if (!el) {
+        console.error("لم يتم العثور على عنصر بـ ID:", id);
+        return;
+    }
+
+    let current = parseInt(el.textContent) || 0; // البدء من الرقم الحالي بدل 0 دائماً
+    if (current === target) return; // لو الرقم هو هو مفيش داعي للأنيميشن
+
+    const duration = 1000; // مدة الأنيميشن ثانية واحدة
+    const frameRate = 30; 
+    const totalFrames = duration / frameRate;
+    const step = (target - current) / totalFrames;
+    
+    let frame = 0;
+    const timer = setInterval(() => {
+      frame++;
+      current += step;
+      el.textContent = Math.round(current);
+      
+      if (frame >= totalFrames) {
+        el.textContent = target; // التأكد من الوصول للرقم الدقيق في الآخر
+        clearInterval(timer);
+      }
+    }, frameRate);
+  }
+
+  /* ═══════════════════════════════════════
+     7.  RENDER TABLE
+  ═══════════════════════════════════════ */
+  function renderTable() {
+    const q = searchQuery.trim().toLowerCase()
+
+    let filtered = allProducts.filter(p => {
+      const matchSearch = !q ||
+        (p.name && p.name.toLowerCase().includes(q)) ||
+        (p.sku && p.sku.toLowerCase().includes(q))
+
+      const status      = getStatus(p)
+      const matchFilter = activeFilter === 'all' || status === activeFilter
+
+      return matchSearch && matchFilter
+    })
+
+    const tbody     = document.getElementById('tableBody') // تأكد أن الـ ID في الـ HTML هو tableBody
+    const tableWrap = document.getElementById('tableWrap')
+    const emptyState = document.getElementById('emptyState')
+
+    if (!tbody) return; // حماية في حال عدم وجود العنصر
+
+    if (filtered.length === 0) {
+      tableWrap.style.display = 'none'
+      emptyState.classList.add('show')
+      updateResultLine(0, allProducts.length)
+      return
+    }
+
+    emptyState.classList.remove('show')
+    tableWrap.style.display = ''
+
+    tbody.innerHTML = filtered.map((p, i) => {
+      const status = getStatus(p)
+      const labels = { ok: 'متوفر', low: 'منخفض', out: 'نفد' }
+      return `
+        <tr>
+          <td>
+            <div class="product-name">${escHtml(p.name)}</div>
+            <div class="product-sku col-sku">${escHtml(p.sku || '—')}</div>
+          </td>
+          <td class="col-cat">
+            <span class="product-category">${escHtml(p.category || '—')}</span>
+          </td>
+          <td>
+            <span class="qty-cell" style="color:${status==='out'?'var(--danger)':status==='low'?'var(--warning)':'var(--text)'}">${p.quantity}</span>
+          </td>
+          <td class="badge-col">
+            <span class="badge ${status}">
+              <span class="badge-dot"></span>${labels[status]}
+            </span>
+          </td>
+        </tr>`
+    }).join('')
+
+    updateResultLine(filtered.length, allProducts.length)
+  }
+
+  function updateResultLine(shown, total) {
+    const el = document.getElementById('resultLine')
+    if (searchQuery || activeFilter !== 'all') {
+      el.innerHTML = `يعرض <span>${shown}</span> من ${total} صنف`
+    } else {
+      el.innerHTML = `إجمالي <span>${total}</span> صنف`
+    }
+  }
+
+  /* ═══════════════════════════════════════
+     8.  SEARCH
+  ═══════════════════════════════════════ */
+  const searchInput = document.getElementById('searchInput')
+  const clearBtn    = document.getElementById('clearBtn')
+
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      searchQuery = searchInput.value
+      renderTable() // هذه الدالة ستستخدم searchQuery المحدث لفلترة الجدول
+    })
+  }
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      searchInput.value = ''
+      searchQuery       = ''
+      clearBtn.classList.remove('visible')
+      searchInput.focus()
+      renderTable()
+    })
+  }
+
+  /* ═══════════════════════════════════════
+     9.  FILTER CHIPS
+  ═══════════════════════════════════════ */
+  document.getElementById('filterRow').addEventListener('click', e => {
+    const chip = e.target.closest('.chip')
+    if (!chip) return
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'))
+    chip.classList.add('active')
+    activeFilter = chip.dataset.filter
+    renderTable()
+  })
+
+  /* ═══════════════════════════════════════
+     10. REFRESH / LOGOUT
+  ═══════════════════════════════════════ */
+  document.getElementById('refreshBtn').addEventListener('click', loadInventory)
+
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await _supabase.auth.signOut()
+    window.location.href = 'index.html'
+  })
+
+  /* ═══════════════════════════════════════
+     11. HELPERS
+  ═══════════════════════════════════════ */
+  function showLoader(state) {
+    const loader = document.getElementById('pageLoader')
+    loader.classList.toggle('hide', !state)
+  }
+
+  function hideStates() {
+    document.getElementById('emptyState').classList.remove('show')
+    document.getElementById('errorState').classList.remove('show')
+    document.getElementById('tableWrap').style.display = ''
+  }
+
+  function showError(msg) {
+    document.getElementById('tableWrap').style.display = 'none'
+    const errEl = document.getElementById('errorState')
+    document.getElementById('errorSubtext').textContent = msg
+    errEl.classList.add('show')
+    document.getElementById('resultLine').textContent = ''
+  }
+
+  function updateTimestamp() {
+    const now = new Date()
+    const fmt  = now.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })
+    document.getElementById('lastUpdate').textContent = `آخر تحديث: ${fmt}`
+  }
+
+  function escHtml(str) {
+    return String(str ?? '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  }
+</script>
+
+</body>
+</html>

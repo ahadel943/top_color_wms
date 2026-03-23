@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>سجل الحركات | إدارة المخازن</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ══ CSS VARIABLES & RESET ══ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d0f12; --surface: #15181e; --surface2: #1c2028;
+      --border: #252930; --border2: #2e3340; --accent: #f5a623;
+      --text: #e8eaf0; --muted:     #b0bad9; --danger: #e05252; --success: #4ade80;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      line-height: 1.6; min-height: 100vh;
+    }
+
+    /* ══ NAVBAR ══ */
+    .topnav { background: rgba(21, 24, 30, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+    .topnav-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.5rem; }
+    .nav-right { display: flex; align-items: center; gap: 24px; }
+    .nav-links { display: flex; gap: 16px; }
+    .nav-link { text-decoration: none; color: var(--muted); font-size: 13px; font-weight: 500; transition: 0.2s; }
+    .nav-link:hover { color: var(--accent); }
+    .logo { display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; }
+    .logo-icon { background: var(--accent); width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--bg); font-weight: bold; }
+
+    /* ══ CONTENT ══ */
+    .container { max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem; }
+    .header-area { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; }
+    .page-title { font-size: 1.5rem; font-weight: 700; }
+    .page-subtitle { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
+
+    /* ══ TABLE STYLE ══ */
+    .table-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; text-align: right; }
+    th { background: var(--surface2); color: var(--muted); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; padding: 1rem; border-bottom: 1px solid var(--border); }
+    td { padding: 1rem; border-bottom: 1px solid var(--border); font-size: 0.9rem; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    
+    .emp-name { font-weight: 500; color: var(--text); }
+    .prod-name { font-weight: 600; color: var(--accent); }
+    .date-cell { font-family: 'IBM Plex Mono', monospace; font-size: 0.8rem; color: var(--muted); }
+    .qty-badge { background: var(--surface2); padding: 2px 8px; border-radius: 4px; font-weight: 600; font-family: 'IBM Plex Mono', monospace; }
+
+    .type-tag { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 5px; }
+    .type-in { background: rgba(74, 222, 128, 0.1); color: var(--success); }
+    .type-out { background: rgba(224, 82, 82, 0.1); color: var(--danger); }
+
+    /* ══ LOADER ══ */
+    .loader { display: flex; justify-content: center; padding: 3rem; color: var(--accent); font-size: 0.9rem; }
+    .empty { padding: 4rem; text-align: center; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+  <nav class="topnav">
+    <div class="topnav-inner">
+      <div class="nav-right">
+        <a href="inventory.html" class="logo">
+          <div class="logo-icon">W</div>
+          <span class="logo-text">WMS · v1.0</span>
+        </a>
+        
+        <div class="nav-links">
+          <a href="inventory.html" class="nav-link">حالة المخزون</a>
+          <a href="add_products.html" class="nav-link">إضافة منتجات</a>
+          <a href="stock_movements.html" class="nav-link">تسجيل حركة</a>
+          <a href="view_movements.html" class="nav-link active">سجل الحركات</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="header-area">
+      <div>
+        <h1 class="page-title">📜 سجل حركات المخزون</h1>
+        <p class="page-subtitle">متابعة دقيقة لكل عمليات الوارد والمنصرف</p>
+      </div>
+      <button onclick="loadMovements()" style="background:none; border:1px solid var(--border2); color:var(--text); padding:8px 16px; border-radius:8px; cursor:pointer; font-size:12px;">تحديث البيانات</button>
+    </div>
+
+    <div class="table-card">
+      <table id="movementsTable">
+        <thead>
+          <tr>
+            <th>التاريخ والوقت</th>
+            <th>المنتج</th>
+            <th>المسؤول</th>
+            <th>نوع الحركة</th>
+            <th>الكمية</th>
+            <th>الرصيد بعد الحركة</th>
+          </tr>
+        </thead>
+        <tbody id="movementsBody">
+          </tbody>
+      </table>
+      <div id="statusArea"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    const SUPABASE_URL = 'https://fyrqrcmelcgdjcmdlebh.supabase.co'
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5cnFyY21lbGNnZGpjbWRsZWJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNTcxMzMsImV4cCI6MjA4NTczMzEzM30.lrwpOs5yWOel9LfzSnmrnWWWBdbedv6TfeHWu_TJOC4'
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+
+    async function loadMovements() {
+      const body = document.getElementById('movementsBody');
+      const status = document.getElementById('statusArea');
+      
+      body.innerHTML = '';
+      status.innerHTML = '<div class="loader">جاري تحميل السجل...</div>';
+
+      try {
+        // جلب البيانات مع عمل Join لاسم المنتج
+        const { data, error } = await _supabase
+          .from('stock_movements')
+          .select(`
+            *,
+            products ( name )
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          status.innerHTML = '<div class="empty">لا توجد حركات مسجلة حتى الآن</div>';
+          return;
+        }
+
+        status.innerHTML = ''; // إخفاء اللودر
+        
+        data.forEach(move => {
+          // تنسيق التاريخ والوقت
+          const dateObj = new Date(move.created_at);
+          const dateStr = dateObj.toLocaleDateString('ar-EG', { year: 'numeric', month: '2-digit', day: '2-digit' });
+          const timeStr = dateObj.toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+
+          const isPlus = move.type === 'وارد' || move.type === 'جرد بزيادة';
+          const typeClass = isPlus ? 'type-in' : 'type-out';
+
+          const row = `
+            <tr>
+              <td class="date-cell">${dateStr} <br> <span style="font-size:11px">${timeStr}</span></td>
+              <td class="prod-name">${move.products?.name || 'منتج محذوف'}</td>
+              <td class="emp-name">${move.employee_name || 'غير محدد'}</td>
+              <td>
+                <span class="type-tag ${typeClass}">
+                  ${isPlus ? '↑' : '↓'} ${move.type}
+                </span>
+              </td>
+              <td class="qty-badge" style="color: ${isPlus ? 'var(--success)' : 'var(--danger)'}">
+                ${isPlus ? '+' : '-'}${move.quantity}
+              </td>
+              <td style="font-weight:700; font-family: 'IBM Plex Mono';">
+                ${move.new_quantity}
+              </td>
+            </tr>
+          `;
+          body.innerHTML += row;
+        });
+
+      } catch (err) {
+        status.innerHTML = `<div class="empty" style="color:var(--danger)">حدث خطأ: ${err.message}</div>`;
+      }
+    }
+
+    // تشغيل الدالة عند تحميل الصفحة
+    loadMovements();
+  </script>
+</body>
+</html>

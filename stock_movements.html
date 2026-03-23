@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>حركة المخزون | إدارة المخازن</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ═══════════════ CSS VARIABLES & RESET ═══════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0d0f12; --surface: #15181e; --surface2: #1c2028;
+      --border: #252930; --border2: #2e3340; --accent: #f5a623;
+      --text: #e8eaf0; --muted:     #b0bad9;; --danger: #e05252; --success: #4ade80;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      line-height: 1.6; min-height: 100vh;
+    }
+
+    /* ═══════════════ NAVBAR ═══════════════ */
+    .topnav { background: rgba(21, 24, 30, 0.8); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+    .topnav-inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1.5rem; }
+    .nav-right { display: flex; align-items: center; gap: 24px; }
+    .nav-links { display: flex; gap: 16px; }
+    .nav-link { text-decoration: none; color: var(--muted); font-size: 13px; font-weight: 500; transition: 0.2s; }
+    .nav-link:hover, .nav-link.active { color: var(--accent); }
+    .logo { display: flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; }
+    .logo-icon { background: var(--accent); width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--bg); font-weight: bold; }
+
+    /* ═══════════════ LAYOUT ═══════════════ */
+    .container { max-width: 600px; margin: 3rem auto; padding: 0 1.5rem; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+    .card-title { font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; }
+
+    /* ═══════════════ FORM ELEMENTS ═══════════════ */
+    .form-group { margin-bottom: 1.5rem; }
+    label { display: block; color: var(--muted); font-size: 0.85rem; margin-bottom: 0.5rem; }
+    select, input {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+      padding: 0.8rem 1rem; border-radius: 10px; color: var(--text);
+      font-family: inherit; font-size: 0.95rem; outline: none; transition: 0.2s;
+    }
+    select:focus, input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.1); }
+    
+    .current-qty-box {
+      background: rgba(245, 166, 35, 0.05); border: 1px dashed var(--border2);
+      padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .qty-val { font-family: 'IBM Plex Mono', monospace; font-weight: 700; color: var(--accent); font-size: 1.1rem; }
+
+    /* ═══════════════ BUTTONS ═══════════════ */
+    .btn-submit {
+      width: 100%; background: var(--accent); color: var(--bg); border: none;
+      padding: 1rem; border-radius: 10px; font-weight: 700; cursor: pointer;
+      transition: 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-submit:hover { background: #e09612; transform: translateY(-2px); }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* ═══════════════ TOAST & LOADER ═══════════════ */
+    .toast { position: fixed; bottom: 20px; right: 20px; padding: 1rem 2rem; border-radius: 10px; background: var(--surface2); border: 1px solid var(--border); transform: translateY(100px); transition: 0.3s; z-index: 1000; }
+    .toast.show { transform: translateY(0); }
+    .toast.success { border-right: 4px solid var(--success); }
+    .toast.error { border-right: 4px solid var(--danger); }
+  </style>
+</head>
+<body>
+
+  <nav class="topnav">
+    <div class="topnav-inner">
+      <div class="nav-right">
+        <a href="inventory.html" class="logo">
+          <div class="logo-icon">W</div>
+          <span class="logo-text">WMS · v1.0</span>
+        </a>
+        <div class="nav-links">
+          <a href="inventory.html" class="nav-link">حالة المخزون</a>
+          <a href="add_products.html" class="nav-link">إضافة منتجات</a>
+          <a href="stock_movements.html" class="nav-link active">حركة المخزون</a>
+          <a href="view_movements.html" class="nav-link active">سجل الحركات</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="card">
+      <h2 class="card-title">📦 تسجيل حركة مخزون</h2>
+      
+      <div class="form-group">
+        <label>اختر المنتج</label>
+        <select id="productSelect">
+          <option value="">جاري تحميل المنتجات...</option>
+        </select>
+      </div>
+
+      <div id="qtyPreview" class="current-qty-box" style="display: none;">
+        <span>الكمية الحالية في المخزن:</span>
+        <span id="currentQty" class="qty-val">0</span>
+      </div>
+
+      <div class="form-group">
+        <label>نوع الحركة</label>
+        <select id="moveType">
+          <option value="وارد">وارد (+)</option>
+          <option value="جرد بزيادة">جرد بزيادة (+)</option>
+          <option value="منصرف">منصرف (-)</option>
+          <option value="جرد بالناقص">جرد بالناقص (-)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>الكمية المطلوب تسجيلها</label>
+        <input type="number" id="moveQty" placeholder="0" min="1">
+      </div>
+
+      <div class="form-group">
+        <label>المسؤول عن الحركة</label>
+        <select id="employeeSelect">
+            <option value="محمد ابراهيم">محمد ابراهيم</option>
+            <option value="يوسف قطب">يوسف قطب</option>
+            <option value="احمد عادل">احمد عادل</option>
+            <option value="عربي مشمش">عربي مشمش</option>
+            <option value="احمد طه">احمد طه</option>
+            <option value="هشام بدر">هشام بدر</option>
+            <option value="محمد بدر">محمد بدر</option>
+            <option value="سيد مليجي">سيد مليجي</option>
+        </select>
+      </div>
+
+      <button id="saveBtn" class="btn-submit">حفظ الحركة وتحديث المخزن</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    /* ═══════════════════════════════════════
+     SUPABASE CONFIG & INITIALIZATION
+  ═══════════════════════════════════════ */
+  const SUPABASE_URL = 'https://fyrqrcmelcgdjcmdlebh.supabase.co'
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5cnFyY21lbGNnZGpjbWRsZWJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNTcxMzMsImV4cCI6MjA4NTczMzEzM30.lrwpOs5yWOel9LfzSnmrnWWWBdbedv6TfeHWu_TJOC4'
+  const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+
+  let allProducts = [];
+
+  // 1. جلب المنتجات لملء القائمة المنسدلة
+  async function fetchProducts() {
+    const { data, error } = await _supabase
+      .from('products')
+      .select('id, name, quantity')
+      .order('name');
+    
+    if (error) return showToast("خطأ في جلب المنتجات", "error");
+    
+    allProducts = data;
+    const select = document.getElementById('productSelect');
+    select.innerHTML = '<option value="">-- اختر المنتج --</option>';
+    
+    data.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.name;
+      select.appendChild(opt);
+    });
+  }
+
+  // 2. عرض الكمية الحالية عند اختيار المنتج
+  document.getElementById('productSelect').addEventListener('change', (e) => {
+    // نستخدم String لضمان المطابقة بين نوع بيانات الـ ID في القاعدة والـ Select
+    const product = allProducts.find(p => String(p.id) === String(e.target.value));
+    const preview = document.getElementById('qtyPreview');
+    
+    if (product) {
+      document.getElementById('currentQty').textContent = product.quantity;
+      preview.style.display = 'flex';
+    } else {
+      preview.style.display = 'none';
+    }
+  });
+
+  // 3. معالجة حفظ الحركة وتحديث المخزن
+  document.getElementById('saveBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('saveBtn');
+    const productId = document.getElementById('productSelect').value;
+    const moveType = document.getElementById('moveType').value;
+    const employeeName = document.getElementById('employeeSelect').value
+    const moveQtyInput = document.getElementById('moveQty').value;
+
+    if (!productId || !employeeName || !moveQtyInput || parseInt(moveQtyInput) <= 0) {
+      return showToast("يرجى ملء كافة البيانات واختيار الموظف", "error");
+    }
+
+    const moveQty = parseInt(moveQtyInput);
+    // العثور على المنتج من الحالة الحالية (المجلوبة من جدول products)
+    const product = allProducts.find(p => String(p.id) === String(productId));
+    
+    if (!product) return showToast("فشل العثور على بيانات المنتج", "error");
+
+    const prevQty = parseInt(product.quantity) || 0;
+    let newQty = 0;
+
+    // الحساب الدقيق للكمية الجديدة
+    if (moveType === 'وارد' || moveType === 'جرد بزيادة') {
+      newQty = prevQty + moveQty;
+    } else {
+      newQty = prevQty - moveQty;
+    }
+
+    if (newQty < 0) return showToast("الكمية المنصرفة أكبر من المتاح بالمخزن", "error");
+
+    btn.disabled = true;
+    btn.textContent = "جاري الحفظ...";
+
+    try {
+      // 1. التحديث الفعلي لجدول المنتجات (products) ليتساوى مع الكمية الجديدة
+      const { error: updateErr } = await _supabase
+        .from('products')
+        .update({ quantity: newQty }) // تحديث العمود quantity مباشرة
+        .eq('id', productId);
+
+      if (updateErr) throw updateErr;
+
+      // 2. تسجيل الحركة في جدول الأرشيف (stock_movements)
+      const { error: insertErr } = await _supabase
+        .from('stock_movements')
+        .insert([{
+          product_id: productId,
+          employee_name: employeeName,
+          type: moveType,
+          quantity: moveQty,
+          prev_quantity: prevQty,
+          new_quantity: newQty // تخزين نفس القيمة المسجلة بالمنتجات
+        }]);
+
+      if (insertErr) throw insertErr;
+
+      showToast("تم تحديث كمية المخزون وتسجيل الحركة بنجاح");
+      
+      // 3. تحديث مصفوفة البيانات المحلية فوراً لضمان تساؤل القيم عند أي عملية تالية
+      product.quantity = newQty; 
+      document.getElementById('currentQty').textContent = newQty;
+      document.getElementById('moveQty').value = "";
+
+      // إعادة جلب المنتجات للتأكد من مطابقة الـ Dropdown للواقع
+      await fetchProducts();
+
+    } catch (err) {
+      console.error(err);
+      showToast("فشل التزامن مع المخزن: " + err.message, "error");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "حفظ الحركة وتحديث المخزن";
+    }
+  });
+
+  // 4. دالة التنبيهات (Toast)
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast ${type} show`;
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // تحميل المنتجات عند فتح الصفحة
+  fetchProducts();
+  </script>
+</body>
+</html>

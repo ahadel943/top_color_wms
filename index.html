@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تسجيل الدخول | إدارة المخازن</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d0f12;
+      --surface:   #15181e;
+      --border:    #252930;
+      --accent:    #f5a623;
+      --accent-dk: #c4831a;
+      --text:      #e8eaf0;
+      --muted:     #5a5f6e;
+      --danger:    #e05252;
+      --input-bg:  #1c2028;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ──────────── layout ──────────── */
+    .page {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem 1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* background grid */
+    .page::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: .45;
+      pointer-events: none;
+    }
+
+    /* amber glow blob */
+    .page::after {
+      content: '';
+      position: fixed;
+      top: -120px;
+      right: -80px;
+      width: 360px;
+      height: 360px;
+      background: radial-gradient(circle, rgba(245,166,35,.18) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    /* ──────────── card ──────────── */
+    .card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 420px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2.25rem 2rem;
+      box-shadow: 0 0 0 1px rgba(245,166,35,.06), 0 32px 64px rgba(0,0,0,.5);
+      animation: slideUp .45s cubic-bezier(.22,.68,0,1.2) both;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* top bar accent */
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent-dk), var(--accent), var(--accent-dk));
+      border-radius: 4px 4px 0 0;
+    }
+
+    /* ──────────── header ──────────── */
+    .header {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: .4rem;
+      margin-bottom: 2rem;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--accent);
+      border-radius: 3px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .logo-icon svg { display: block; }
+
+    .logo-text {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .7rem;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .page-title {
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-top: .5rem;
+    }
+
+    .page-sub {
+      font-size: .82rem;
+      color: var(--muted);
+      font-weight: 400;
+    }
+
+    /* ──────────── form ──────────── */
+    .form { display: flex; flex-direction: column; gap: 1.1rem; }
+
+    .field { display: flex; flex-direction: column; gap: .45rem; }
+
+    label {
+      font-size: .8rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: .04em;
+    }
+
+    .input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-icon {
+      position: absolute;
+      right: .9rem;          /* RTL: icon on right */
+      color: var(--muted);
+      pointer-events: none;
+      line-height: 0;
+    }
+
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text);
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      font-size: .95rem;
+      padding: .75rem 2.6rem .75rem 1rem;  /* RTL: padding-right for icon */
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      direction: ltr;          /* emails/passwords are LTR */
+      text-align: right;
+    }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(245,166,35,.12);
+    }
+
+    input::placeholder { color: var(--muted); opacity: .6; }
+
+    /* show/hide password toggle */
+    .toggle-pass {
+      position: absolute;
+      left: .9rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      line-height: 0;
+      padding: 0;
+      transition: color .2s;
+    }
+    .toggle-pass:hover { color: var(--text); }
+
+    /* ──────────── error msg ──────────── */
+    .error-msg {
+      display: none;
+      align-items: center;
+      gap: .5rem;
+      background: rgba(224,82,82,.1);
+      border: 1px solid rgba(224,82,82,.3);
+      border-radius: 3px;
+      padding: .65rem .9rem;
+      font-size: .82rem;
+      color: var(--danger);
+      animation: fadeIn .25s ease both;
+    }
+    .error-msg.show { display: flex; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ──────────── button ──────────── */
+    .btn-login {
+      width: 100%;
+      background: var(--accent);
+      color: #0d0f12;
+      border: none;
+      border-radius: 3px;
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      font-size: .95rem;
+      font-weight: 700;
+      padding: .85rem;
+      cursor: pointer;
+      margin-top: .4rem;
+      transition: background .2s, transform .1s, box-shadow .2s;
+      position: relative;
+      overflow: hidden;
+      letter-spacing: .02em;
+    }
+
+    .btn-login:hover {
+      background: #f7b440;
+      box-shadow: 0 4px 20px rgba(245,166,35,.35);
+    }
+
+    .btn-login:active { transform: scale(.98); }
+
+    .btn-login:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* spinner inside button */
+    .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(0,0,0,.25);
+      border-top-color: #0d0f12;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .btn-text { transition: opacity .2s; }
+    .btn-login.loading .btn-text { display: none; }
+    .btn-login.loading .spinner   { display: block; }
+
+    /* ──────────── footer tag ──────────── */
+    .footer-tag {
+      margin-top: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .68rem;
+      color: var(--muted);
+      letter-spacing: .06em;
+    }
+
+    .footer-tag::before,
+    .footer-tag::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ──────────── responsive tweaks ──────────── */
+    @media (max-width: 380px) {
+      .card { padding: 1.75rem 1.25rem; }
+      .page-title { font-size: 1.25rem; }
+    }
+
+    @media (min-width: 600px) {
+      .card { padding: 2.75rem 2.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+  <div class="card">
+
+    <!-- header -->
+    <div class="header">
+      <div class="logo-row">
+        <div class="logo-icon">
+          <!-- warehouse icon -->
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d0f12" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9.5 12 4l9 5.5V20H3V9.5z"/>
+            <rect x="9" y="14" width="6" height="6" rx=".5"/>
+          </svg>
+        </div>
+        <span class="logo-text">WMS · v1.0</span>
+      </div>
+      <h1 class="page-title">تسجيل الدخول</h1>
+      <p class="page-sub">أدخل بياناتك للوصول إلى لوحة التحكم</p>
+    </div>
+
+    <!-- form -->
+    <form class="form" id="loginForm" novalidate>
+
+      <!-- email -->
+      <div class="field">
+        <label for="email">البريد الإلكتروني</label>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="4" width="20" height="16" rx="2"/>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+            </svg>
+          </span>
+          <input type="email" id="email" name="email"
+                 placeholder="example@company.com"
+                 autocomplete="email" required />
+        </div>
+      </div>
+
+      <!-- password -->
+      <div class="field">
+        <label for="password">كلمة المرور</label>
+        <div class="input-wrap">
+          <span class="input-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </span>
+          <input type="password" id="password" name="password"
+                 placeholder="••••••••"
+                 autocomplete="current-password" required />
+          <button type="button" class="toggle-pass" id="togglePass" aria-label="إظهار كلمة المرور">
+            <!-- eye icon -->
+            <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- error -->
+      <div class="error-msg" id="errorMsg" role="alert">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span id="errorText">بيانات الدخول غير صحيحة</span>
+      </div>
+
+      <!-- submit -->
+      <button type="submit" class="btn-login" id="loginBtn">
+        <span class="btn-text">دخول</span>
+        <div class="spinner"></div>
+      </button>
+
+    </form>
+
+    <div class="footer-tag">WAREHOUSE MANAGEMENT SYSTEM</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     Supabase SDK  (اقلب الكومنت لما تحط credentials)
+     ══════════════════════════════════════════ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  /* ── 1. ضع هنا بيانات مشروعك من Supabase ── */
+  const SUPABASE_URL = 'https://fyrqrcmelcgdjcmdlebh.supabase.co'
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5cnFyY21lbGNnZGpjbWRsZWJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNTcxMzMsImV4cCI6MjA4NTczMzEzM30.lrwpOs5yWOel9LfzSnmrnWWWBdbedv6TfeHWu_TJOC4'
+
+  const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+
+  /* ── 2. لو المستخدم مسجل دخوله بالفعل ─────── */
+  ;(async () => {
+    const { data: { session } } = await _supabase.auth.getSession()
+    if (session) window.location.href = 'inventory.html'
+  })()
+
+  /* ── 3. show / hide password ─────────────── */
+  const passInput  = document.getElementById('password')
+  const toggleBtn  = document.getElementById('togglePass')
+  const eyeIcon    = document.getElementById('eyeIcon')
+
+  const eyeOpen = `<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/>`
+  const eyeOff  = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>`
+
+  toggleBtn.addEventListener('click', () => {
+    const shown = passInput.type === 'text'
+    passInput.type = shown ? 'password' : 'text'
+    eyeIcon.innerHTML = shown ? eyeOpen : eyeOff
+    toggleBtn.setAttribute('aria-label', shown ? 'إظهار كلمة المرور' : 'إخفاء كلمة المرور')
+  })
+
+  /* ── 4. login form ───────────────────────── */
+  const form     = document.getElementById('loginForm')
+  const loginBtn = document.getElementById('loginBtn')
+  const errorMsg = document.getElementById('errorMsg')
+  const errorTxt = document.getElementById('errorText')
+
+  function showError(msg) {
+    errorTxt.textContent = msg
+    errorMsg.classList.add('show')
+  }
+
+  function hideError() {
+    errorMsg.classList.remove('show')
+  }
+
+  function setLoading(state) {
+    loginBtn.disabled = state
+    loginBtn.classList.toggle('loading', state)
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault()
+    hideError()
+
+    const email    = document.getElementById('email').value.trim()
+    const password = document.getElementById('password').value
+
+    if (!email || !password) {
+      showError('من فضلك أدخل البريد الإلكتروني وكلمة المرور')
+      return
+    }
+
+    setLoading(true)
+
+    const { error } = await _supabase.auth.signInWithPassword({ email, password })
+
+    setLoading(false)
+
+    if (error) {
+      const msg = error.message.includes('Invalid login')
+        ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
+        : 'حدث خطأ، حاول مرة أخرى'
+      showError(msg)
+      return
+    }
+
+    window.location.href = 'inventory.html'
+  })
+</script>
+
+</body>
+</html>

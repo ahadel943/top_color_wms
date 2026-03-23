@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>إضافة منتج | إدارة المخازن</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #0d0f12;
+      --surface:  #15181e;
+      --surface2: #1c2028;
+      --border:   #252930;
+      --border2:  #2e3340;
+      --accent:   #f5a623;
+      --accent-dk:#c4831a;
+      --text:     #e8eaf0;
+      --muted:    #b0bad9;
+      --danger:   #e05252;
+      --success:  #4caf82;
+      --input-bg: #1c2028;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      font-size: 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: .3;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ══ NAVBAR ══ */
+    .topnav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(13,15,18,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 1rem;
+    }
+
+    .topnav-inner {
+      max-width: 700px;
+      margin: 0 auto;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* تنسيقات إضافية للـ Navbar */
+.nav-right-side {
+  display: flex;
+  align-items: center;
+  gap: 2rem; /* مسافة بين اللوجو والروابط */
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.nav-link {
+  text-decoration: none;
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: color 0.2s;
+  padding: 0.5rem 0;
+  position: relative;
+}
+
+.nav-link:hover {
+  color: var(--text);
+}
+
+/* .nav-link.active {
+  color: var(--accent);
+} */
+
+/* خط صغير تحت الرابط النشط */
+/* .nav-link.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+} */
+
+@media (max-width: 600px) {
+  .nav-right-side { gap: 1rem; }
+  .nav-links { gap: 0.8rem; }
+  .nav-link { font-size: 0.75rem; }
+}
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 30px; height: 30px;
+      background: var(--accent);
+      border-radius: 3px;
+      display: grid;
+      place-items: center;
+    }
+
+    .logo-text {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: .65rem;
+      font-weight: 500;
+      color: var(--accent);
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .nav-actions { display: flex; align-items: center; gap: .5rem; }
+
+    .btn-icon {
+      width: 36px; height: 36px;
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      transition: color .2s, border-color .2s, background .2s;
+      text-decoration: none;
+    }
+    .btn-icon:hover {
+      color: var(--text);
+      border-color: var(--border2);
+      background: var(--surface2);
+    }
+
+    /* ══ MAIN ══ */
+    .main {
+      position: relative;
+      z-index: 1;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 1.75rem 1rem 4rem;
+    }
+
+    .page-header {
+      margin-bottom: 1.75rem;
+      animation: fadeUp .4s ease both;
+    }
+    .page-header h1 { font-size: 1.35rem; font-weight: 700; }
+    .page-header p  { font-size: .82rem; color: var(--muted); margin-top: .25rem; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ══ CARD ══ */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      animation: fadeUp .4s .06s ease both;
+      opacity: 0;
+      animation-fill-mode: forwards;
+    }
+
+    .card-header {
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: .9rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+    }
+
+    .card-header-icon {
+      width: 28px; height: 28px;
+      background: rgba(245,166,35,.12);
+      border-radius: 3px;
+      display: grid;
+      place-items: center;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .card-header-title {
+      font-size: .88rem;
+      font-weight: 600;
+    }
+
+    .card-body { padding: 1.5rem 1.25rem; }
+
+    /* ══ FORM GRID ══ */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.1rem 1.25rem;
+    }
+
+    .field { display: flex; flex-direction: column; gap: .45rem; }
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: .04em;
+    }
+
+    label .required {
+      color: var(--accent);
+      margin-right: .2rem;
+    }
+
+    /* ── inputs ── */
+    .input-wrap { position: relative; }
+
+    .input-icon {
+      position: absolute;
+      right: .9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+      line-height: 0;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    select {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text);
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      font-size: .92rem;
+      padding: .75rem 2.5rem .75rem 1rem;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    input[type="number"] {
+      direction: ltr;
+      text-align: right;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(245,166,35,.1);
+    }
+
+    input::placeholder { color: var(--muted); opacity: .6; }
+
+    input.error, select.error {
+      border-color: var(--danger);
+      box-shadow: 0 0 0 3px rgba(224,82,82,.1);
+    }
+
+    /* select arrow */
+    .select-wrap { position: relative; }
+
+    .select-arrow {
+      position: absolute;
+      left: .9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+      line-height: 0;
+    }
+
+    select option { background: var(--surface2); }
+
+    /* field error msg */
+    .field-err {
+      font-size: .75rem;
+      color: var(--danger);
+      display: none;
+      margin-top: .1rem;
+    }
+    .field-err.show { display: block; }
+
+    /* ── divider ── */
+    .divider {
+      grid-column: 1 / -1;
+      height: 1px;
+      background: var(--border);
+      margin: .25rem 0;
+    }
+
+    .section-label {
+      grid-column: 1 / -1;
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: -.25rem;
+    }
+
+    /* ── toast ── */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: .75rem 1.25rem;
+      font-size: .88rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: .6rem;
+      z-index: 500;
+      white-space: nowrap;
+      box-shadow: 0 8px 32px rgba(0,0,0,.5);
+      transition: transform .35s cubic-bezier(.22,.68,0,1.2), opacity .3s;
+      opacity: 0;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .toast.success { border-color: rgba(76,175,130,.4); color: var(--success); }
+    .toast.error   { border-color: rgba(224,82,82,.4);  color: var(--danger); }
+
+    /* ── submit button ── */
+    .form-actions {
+      display: flex;
+      gap: .75rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-submit {
+      flex: 1;
+      min-width: 140px;
+      background: var(--accent);
+      color: #0d0f12;
+      border: none;
+      border-radius: 3px;
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      font-size: .95rem;
+      font-weight: 700;
+      padding: .85rem;
+      cursor: pointer;
+      transition: background .2s, box-shadow .2s, transform .1s;
+      position: relative;
+    }
+
+    .btn-submit:hover {
+      background: #f7b440;
+      box-shadow: 0 4px 20px rgba(245,166,35,.3);
+    }
+
+    .btn-submit:active { transform: scale(.98); }
+
+    .btn-submit:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-reset {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--muted);
+      font-family: 'IBM Plex Sans Arabic', sans-serif;
+      font-size: .92rem;
+      font-weight: 500;
+      padding: .85rem 1.5rem;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-reset:hover {
+      border-color: var(--border2);
+      color: var(--text);
+      background: var(--surface2);
+    }
+
+    .btn-text { display: block; }
+    .btn-spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(0,0,0,.25);
+      border-top-color: #0d0f12;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      margin: 0 auto;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-submit.loading .btn-text    { display: none; }
+    .btn-submit.loading .btn-spinner { display: block; }
+
+    /* ══ RESPONSIVE ══ */
+    @media (max-width: 500px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .field.full { grid-column: 1; }
+      .divider, .section-label { grid-column: 1; }
+      .card-body { padding: 1.25rem 1rem; }
+      .page-header h1 { font-size: 1.15rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══ NAVBAR ══ -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <div class="nav-right-side">
+      <a href="inventory.html" class="logo-row">
+        <div class="logo-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0d0f12" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9.5 12 4l9 5.5V20H3V9.5z"/>
+            <rect x="9" y="14" width="6" height="6" rx=".5"/>
+          </svg>
+        </div>
+        <span class="logo-text">WMS · v1.0</span>
+      </a>
+      
+      <div class="nav-links">
+        <a href="inventory.html" class="nav-link active">حالة المخزون</a>
+        <a href="add_products.html" class="nav-link">إضافة منتجات</a>
+        <a href="stock_movements.html" class="nav-link">حركات المخزون</a>
+        <a href="view_movements.html" class="nav-link active">سجل الحركات</a>
+      </div>
+    </div>
+
+    <div class="nav-actions">
+      <button class="btn-icon" id="refreshBtn" title="تحديث">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+          <path d="M21 3v5h-5"/>
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+          <path d="M8 16H3v5"/>
+        </svg>
+      </button>
+      <button class="btn-icon" id="logoutBtn" title="تسجيل الخروج">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ══ MAIN ══ -->
+<main class="main">
+
+  <div class="page-header">
+    <h1>إضافة منتج جديد</h1>
+    <p>أدخل بيانات المنتج وسيتم حفظه في المخزون فوراً</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+      </div>
+      <span class="card-header-title">بيانات المنتج</span>
+    </div>
+
+    <div class="card-body">
+      <div class="form-grid" id="productForm">
+
+        <!-- ── القسم الأول: المعلومات الأساسية ── -->
+        <div class="section-label">المعلومات الأساسية</div>
+
+        <!-- اسم المنتج -->
+        <div class="field full">
+          <label for="name">اسم المنتج <span class="required">*</span></label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+              </svg>
+            </span>
+            <input type="text" id="name" placeholder="مثال: بوية حائط أبيض" />
+          </div>
+          <span class="field-err" id="err-name">اسم المنتج مطلوب</span>
+        </div>
+
+        <!-- البراند -->
+        <div class="field">
+          <label for="brand">البراند <span class="required">*</span></label>
+          <div class="select-wrap">
+            <span class="input-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/>
+              </svg>
+            </span>
+            <select id="brand">
+              <option value="">— اختر البراند —</option>
+              <!-- ✏️ أضف البراندات هنا -->
+              <option value="جي الي سي">جي الي سي</option>
+              <option value="سكيب">سكيب</option>
+              <option value="جوتن">جوتن</option>
+              <option value="بيوتك">بيوتك</option>
+              <option value="فيوليت">فيوليت</option>
+              <option value="ناشونال">ناشونال</option>
+              <option value="كابسي">كابسي</option>
+              <option value="ايه بي تي">ايه بي تي</option>
+              <option value="انكو">انكو</option>
+              <option value="قورا">قورا</option>
+              <option value="سيكا">سيكا</option>
+              <option value="باكين">باكين</option>
+            </select>
+            <span class="select-arrow">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </span>
+          </div>
+          <span class="field-err" id="err-brand">اختر البراند</span>
+        </div>
+
+        <!-- التصنيف -->
+        <div class="field">
+          <label for="category">التصنيف <span class="required">*</span></label>
+          <div class="select-wrap">
+            <span class="input-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 6h16M4 12h8M4 18h4"/>
+              </svg>
+            </span>
+            <select id="category">
+              <option value="">— اختر التصنيف —</option>
+              <!-- ✏️ أضف التصنيفات هنا -->
+              <option value="دهانات بلاستيكية">دهانات بلاستيكية</option>
+              <option value="دهانات زيتية">دهانات زيتية</option>
+              <option value="كرانيش">كرانيش</option>
+              <option value="معدات">معدات</option>
+            </select>
+            <span class="select-arrow">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </span>
+          </div>
+          <span class="field-err" id="err-category">اختر التصنيف</span>
+        </div>
+
+        <!-- SKU -->
+        <div class="field">
+          <label for="sku">كود المنتج (SKU)</label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="16" rx="2"/>
+                <path d="M7 8h10M7 12h6"/>
+              </svg>
+            </span>
+            <input type="text" id="sku" placeholder="مثال: PRD-0042" style="direction:ltr; text-align:right;" />
+          </div>
+        </div>
+
+        <!-- الوحدة -->
+        <div class="field">
+          <label for="unit">الوحدة</label>
+          <div class="select-wrap">
+            <span class="input-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/>
+              </svg>
+            </span>
+            <select id="unit">
+              <option value="بستلة">بستلة</option>
+              <option value="جالون">جالون</option>
+              <option value="كيلو">كيلو</option>
+              <option value="شكارة">شكارة</option>
+              <option value="متر طولي">متر طولي</option>
+              <option value="علبة">علبة</option>
+              <option value="علبة">علبة</option>
+            </select>
+            <span class="select-arrow">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </span>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- ── القسم الثاني: المخزون ── -->
+        <div class="section-label">بيانات المخزون</div>
+
+        <!-- الكمية -->
+        <div class="field">
+          <label for="quantity">الكمية الحالية <span class="required">*</span></label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 12V22H4V12"/>
+                <path d="M22 7H2v5h20V7z"/>
+                <path d="M12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>
+              </svg>
+            </span>
+            <input type="number" id="quantity" placeholder="0" min="0" value="0" />
+          </div>
+          <span class="field-err" id="err-quantity">الكمية يجب أن تكون 0 أو أكثر</span>
+        </div>
+
+        <!-- الحد الأدنى -->
+        <div class="field">
+          <label for="low_threshold">حد التنبيه (مخزون منخفض)</label>
+          <div class="input-wrap">
+            <span class="input-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+            </span>
+            <input type="number" id="low_threshold" placeholder="10" min="0" value="10" />
+          </div>
+        </div>
+
+      </div><!-- /form-grid -->
+
+      <!-- actions -->
+      <div class="form-actions">
+        <button class="btn-submit" id="submitBtn" type="button">
+          <span class="btn-text">حفظ المنتج</span>
+          <div class="btn-spinner"></div>
+        </button>
+        <button class="btn-reset" id="resetBtn" type="button">مسح الفورم</button>
+      </div>
+
+    </div><!-- /card-body -->
+  </div><!-- /card -->
+
+</main>
+
+<!-- toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ══ SUPABASE + LOGIC ══ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+
+  /* ═══════════════════════════════
+     CONFIG — غيّر القيمتين دول
+  ═══════════════════════════════ */
+  const SUPABASE_URL = 'https://fyrqrcmelcgdjcmdlebh.supabase.co'
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5cnFyY21lbGNnZGpjbWRsZWJoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAxNTcxMzMsImV4cCI6MjA4NTczMzEzM30.lrwpOs5yWOel9LfzSnmrnWWWBdbedv6TfeHWu_TJOC4'
+  const TABLE_NAME   = 'products'
+
+  const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+
+  /* ═══════════════════════════════
+     AUTH GUARD
+  ═══════════════════════════════ */
+  ;(async () => {
+    const { data: { session } } = await _supabase.auth.getSession()
+    if (!session) window.location.href = 'index.html'
+  })()
+
+  /* ═══════════════════════════════
+     VALIDATION
+  ═══════════════════════════════ */
+  function validateForm() {
+    let valid = true
+
+    const rules = [
+      { id: 'name',     errId: 'err-name',     check: v => v.trim() !== '' },
+      { id: 'brand',    errId: 'err-brand',    check: v => v !== '' },
+      { id: 'category', errId: 'err-category', check: v => v !== '' },
+      { id: 'quantity', errId: 'err-quantity',  check: v => v !== '' && Number(v) >= 0 },
+    ]
+
+    rules.forEach(({ id, errId, check }) => {
+      const el  = document.getElementById(id)
+      const err = document.getElementById(errId)
+      if (!check(el.value)) {
+        el.classList.add('error')
+        err.classList.add('show')
+        valid = false
+      } else {
+        el.classList.remove('error')
+        err.classList.remove('show')
+      }
+    })
+
+    return valid
+  }
+
+  // clear error on input
+  ['name','brand','category','quantity'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => {
+      document.getElementById(id).classList.remove('error')
+      const err = document.getElementById('err-' + id)
+      if (err) err.classList.remove('show')
+    })
+  })
+
+  /* ═══════════════════════════════
+     SUBMIT
+  ═══════════════════════════════ */
+  document.getElementById('submitBtn').addEventListener('click', async () => {
+    if (!validateForm()) return
+
+    const btn = document.getElementById('submitBtn')
+    btn.classList.add('loading')
+    btn.disabled = true
+
+    const payload = {
+      name:          document.getElementById('name').value.trim(),
+      brand:         document.getElementById('brand').value,
+      category:      document.getElementById('category').value,
+      sku:           document.getElementById('sku').value.trim() || null,
+      unit:          document.getElementById('unit').value,
+      quantity:      parseInt(document.getElementById('quantity').value) || 0,
+      low_threshold: parseInt(document.getElementById('low_threshold').value) || 10,
+    }
+
+    const { error } = await _supabase.from(TABLE_NAME).insert([payload])
+
+    btn.classList.remove('loading')
+    btn.disabled = false
+
+    if (error) {
+      showToast('حدث خطأ أثناء الحفظ: ' + error.message, 'error')
+      return
+    }
+
+    showToast('✓ تم حفظ المنتج بنجاح', 'success')
+    resetForm()
+  })
+
+  /* ═══════════════════════════════
+     RESET
+  ═══════════════════════════════ */
+  document.getElementById('resetBtn').addEventListener('click', resetForm)
+
+  function resetForm() {
+    ['name','sku'].forEach(id => {
+      document.getElementById(id).value = ''
+      document.getElementById(id).classList.remove('error')
+    })
+    document.getElementById('brand').value         = ''
+    document.getElementById('category').value      = ''
+    document.getElementById('unit').value          = 'قطعة'
+    document.getElementById('quantity').value      = '0'
+    document.getElementById('low_threshold').value = '10'
+
+    document.querySelectorAll('.field-err').forEach(e => e.classList.remove('show'))
+    document.querySelectorAll('.error').forEach(e => e.classList.remove('error'))
+  }
+
+  /* ═══════════════════════════════
+     TOAST
+  ═══════════════════════════════ */
+  let toastTimer
+  function showToast(msg, type = 'success') {
+    const t = document.getElementById('toast')
+    t.textContent = msg
+    t.className   = `toast ${type} show`
+    clearTimeout(toastTimer)
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3500)
+  }
+
+  /* ═══════════════════════════════
+     LOGOUT
+  ═══════════════════════════════ */
+  document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await _supabase.auth.signOut()
+    window.location.href = 'index.html'
+  })
+
+</script>
+</body>
+</html>
